@@ -63,13 +63,23 @@ function captureImageAndSend(detection) {
   context.drawImage(video, 0, 0, video.width, video.height);
   const capturedImage = canvas.toDataURL("image/jpeg");
 
-  // Send the captured image with a POST request (replace 'your-api-endpoint' with the actual endpoint)
+  // Convert base64 to Blob
+  const byteCharacters = atob(capturedImage.split(',')[1]);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+  // Create FormData and append the image
+  const formData = new FormData();
+  formData.append('imageRequest', blob, 'image.jpg');
+
+  // Send the captured image with a POST request as multipart
   fetch('http://localhost:8080/api/members/process-face', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ image: capturedImage}),
+    body: formData,
   })
   .then(response => response.json())
   .then(data => {
@@ -79,3 +89,4 @@ function captureImageAndSend(detection) {
     console.error('Error sending image:', error);
   });
 }
+
